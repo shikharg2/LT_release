@@ -167,7 +167,7 @@ def init_docker_swarm() -> None:
     if swarm_state != "active":
         print("  Initializing Docker Swarm...")
         init_result = subprocess.run(
-            ["docker", "swarm", "init"],
+            ["docker", "swarm", "init", "--advertize-addr", "127.0.0.1"],
             capture_output=True,
             text=True,
             timeout=30
