@@ -1,0 +1,36 @@
+#!/bin/bash
+set -e
+
+INSTALL_DIR="/opt/loadtestframework"
+SETUP_SCRIPT="$INSTALL_DIR/setup.sh"
+
+echo "=========================================="
+echo " LoadTest Framework - Post-Install"
+echo "=========================================="
+echo ""
+echo "Package files installed to $INSTALL_DIR"
+
+# ── Set permissions ──
+chmod -R 755 "$INSTALL_DIR"
+chmod +x /usr/local/bin/loadtest
+chmod +x /usr/local/bin/loadtest-cleanup
+chmod +x "$SETUP_SCRIPT"
+
+# ── Create results directory ──
+mkdir -p "$INSTALL_DIR/results_voip"
+if [ -n "$SUDO_USER" ]; then
+    chown -R "$SUDO_USER":"$SUDO_USER" "$INSTALL_DIR/results_voip"
+fi
+
+echo ""
+echo "=========================================="
+echo " Run first-time setup to complete install:"
+echo "=========================================="
+echo ""
+echo "  sudo loadtest --setup"
+echo ""
+echo " This will install Docker, Python deps,"
+echo " SIPp, and build the Docker image."
+echo ""
+
+exit 0

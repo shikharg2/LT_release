@@ -1,0 +1,260 @@
+{
+  "global_settings": {
+    "report_path": "./results_voip/"
+  },
+  "scenarios": [
+    {
+      "id": "speed_test_public_server",
+      "description": "Speed test results gathered from public server",
+      "enabled": false,
+      "protocol": "speed_test",
+      "schedule": {
+        "mode": "recurring",
+        "start_time": "immediate",
+        "interval_minutes": 60.0,
+        "duration_hours": 6.0
+      },
+      "parameters": {
+        "target_url": [
+          "23.249.55.42"
+        ],
+        "duration": 100
+      },
+      "expectations": [
+        {
+          "metric": "upload_speed",
+          "operator": "lte",
+          "value": 15,
+          "unit": "mbps",
+          "aggregation": "p95",
+          "evaluation_scope": "per_iteration"
+        }
+      ]
+    },
+    {
+      "id": "web_browsing_test",
+      "description": "Browsing different URL's on the web",
+      "enabled": true,
+      "protocol": "web_browsing",
+      "schedule": {
+        "mode": "recurring",
+        "start_time": "immediate",
+        "interval_minutes": 1.0,
+        "duration_hours": 0.05
+      },
+      "parameters": {
+        "target_url": [
+          "https://www.googhgfdghfdle.com"
+        ],
+        "headless": true,
+        "disable_cache": true
+      },
+      "expectations": [
+        {
+          "metric": "page_load_time",
+          "operator": "lte",
+          "value": 10000,
+          "unit": "ms",
+          "aggregation": "p50",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "http_response_code",
+          "operator": "eq",
+          "value": 200.0,
+          "unit": "code",
+          "aggregation": "avg",
+          "evaluation_scope": "per_iteration"
+        }
+      ]
+    },
+    {
+      "id": "streaming_test",
+      "description": "Testing for streaming Jellyfin videos",
+      "enabled": false,
+      "protocol": "streaming",
+      "schedule": {
+        "mode": "once",
+        "start_time": "immediate"
+      },
+      "parameters": {
+        "server_url": "http://20.219.59.36:8096",
+        "api_key": "c68f4199610848f0bb1e59505e556f7e",
+        "item_ids": [
+          "b6c911fdf779cacbb9bbad3c9f0c5f8c"
+        ],
+        "headless": true,
+        "disable_cache": true,
+        "parallel_browsing": true,
+        "aggregate": false
+      },
+      "expectations": [
+        {
+          "metric": "initial_buffer_time",
+          "operator": "lte",
+          "value": 5000,
+          "unit": "ms",
+          "aggregation": "p90",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "test_wall_seconds",
+          "operator": "gte",
+          "value": 1,
+          "unit": "seconds",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "startup_latency_sec",
+          "operator": "lte",
+          "value": 5,
+          "unit": "seconds",
+          "aggregation": "p90",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "playback_seconds",
+          "operator": "gte",
+          "value": 1,
+          "unit": "seconds",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "active_playback_seconds",
+          "operator": "gte",
+          "value": 1,
+          "unit": "seconds",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "rebuffer_events",
+          "operator": "lte",
+          "value": 3,
+          "unit": "count",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "rebuffer_ratio",
+          "operator": "lte",
+          "value": 0.1,
+          "unit": "ratio",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "min_buffer",
+          "operator": "gte",
+          "value": 0,
+          "unit": "seconds",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "max_buffer",
+          "operator": "gte",
+          "value": 0,
+          "unit": "seconds",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "avg_buffer",
+          "operator": "gte",
+          "value": 0,
+          "unit": "seconds",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "resolution_switches",
+          "operator": "lte",
+          "value": 5,
+          "unit": "count",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "segments_fetched",
+          "operator": "gte",
+          "value": 1,
+          "unit": "count",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "non_200_segments",
+          "operator": "lte",
+          "value": 5,
+          "unit": "count",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "avg_segment_latency_sec",
+          "operator": "lte",
+          "value": 2,
+          "unit": "seconds",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "max_segment_latency_sec",
+          "operator": "lte",
+          "value": 5,
+          "unit": "seconds",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "est_bitrate_bps",
+          "operator": "gte",
+          "value": 0,
+          "unit": "bps",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        },
+        {
+          "metric": "error_count",
+          "operator": "lte",
+          "value": 5,
+          "unit": "count",
+          "aggregation": "avg",
+          "evaluation_scope": "scenario"
+        }
+      ]
+    },
+    {
+      "id": "VoIP_test_1",
+      "description": "To perform Voip testing on audio scenario",
+      "enabled": false,
+      "protocol": "voip_sipp",
+      "schedule": {
+        "mode": "once",
+        "start_time": "immediate"
+      },
+      "parameters": {
+        "target_url": [
+          "20.219.59.36"
+        ],
+        "number_of_calls": 5,
+        "call_duration": 3,
+        "type": "audio",
+        "transport": "udp"
+      },
+      "expectations": [
+        {
+          "metric": "avg_rtt",
+          "operator": "lt",
+          "value": 300.0,
+          "unit": "ms",
+          "aggregation": "avg",
+          "evaluation_scope": "per_iteration"
+        }
+      ]
+    }
+  ]
+}

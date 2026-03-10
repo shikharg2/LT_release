@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+INSTALL_DIR="/opt/loadtestframework"
+
+echo "=========================================="
+echo " LoadTest Framework - Post-Removal"
+echo "=========================================="
+
+# Remove the virtual environment and any generated files
+if [ -d "$INSTALL_DIR" ]; then
+    echo "Removing installation directory..."
+    rm -rf "$INSTALL_DIR"
+fi
+
+# Remove SIPp binary if it was installed by us
+if [ -f "/usr/local/bin/sipp" ]; then
+    echo "Removing SIPp binary..."
+    rm -f /usr/local/bin/sipp
+fi
+
+echo "Post-removal cleanup complete."
+echo "Note: Docker and other system dependencies were NOT removed."
+echo "      Run 'sudo apt autoremove' to remove unused dependencies."
+
+exit 0

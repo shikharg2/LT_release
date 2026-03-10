@@ -1,0 +1,127 @@
+#!/bin/bash
+#
+# loadtest-cleanup - Clean up LoadTest Framework Docker resources
+#
+# Usage:
+#   loadtest-cleanup           Clean all loadtest Docker resources (preserve postgres)
+#   loadtest-cleanup --remove  Full cleanup + uninstall the package
+#   loadtest-cleanup --help    Show usage information
+#
+
+INSTALL_DIR="/opt/loadtestframework"
+VENV_DIR="$INSTALL_DIR/.venv"
+ACTIVATE="$VENV_DIR/bin/activate"
+
+show_help() {
+    echo "LoadTest Framework Cleanup"
+    echo ""
+    echo "Usage:"
+    echo "  loadtest-cleanup             Clean all loadtest Docker resources"
+    echo "                               (services, containers, networks, volumes)"
+    echo "                               Preserves the postgres db-container."
+    echo ""
+    echo "  loadtest-cleanup --remove    Full cleanup of ALL Docker resources"
+    echo "                               (including db-container, images, volumes)"
+    echo "                               then uninstalls the loadtestframework package."
+    echo ""
+    echo "  loadtest-cleanup --help      Show this help message"
+}
+
+cleanup_standard() {
+    # Use the Python cleanup script if venv is available
+    if [ -f "$ACTIVATE" ] && [ -f "$INSTALL_DIR/cleanup.py" ]; then
+        # shellcheck disable=SC1090
+        source "$ACTIVATE"
+        export PYTHONPATH="$INSTALL_DIR:$PYTHONPATH"
+        python3 "$INSTALL_DIR/cleanup.py"
+    else
+        # Fallback: direct Docker commands
+        echo "Virtual environment not found, using direct Docker commands..."
+
+        echo "Removing loadtest services..."
+        docker service ls --format '{{.Name}}' 2>/dev/null | grep '^loadtest-' | xargs -r docker service rm 2>/dev/null || true
+
+        echo "Removing loadtest containers (preserving db-container)..."
+        docker ps -a --format '{{.Names}}' 2>/dev/null | grep -i 'loadtest' | grep -v 'db-container' | xargs -r docker stop 2>/dev/null || true
+        docker ps -a --format '{{.Names}}' 2>/dev/null | grep -i 'loadtest' | grep -v 'db-container' | xargs -r docker rm 2>/dev/null || true
+
+        echo "Removing loadtest networks..."
+        docker network ls --format '{{.Name}}' 2>/dev/null | grep -i 'loadtest' | xargs -r docker network rm 2>/dev/null || true
+
+        echo "Pruning unused Docker resources..."
+        docker container prune -f 2>/dev/null || true
+        docker network prune -f 2>/dev/null || true
+    fi
+
+    # Also remove loadtest volumes (not handled by cleanup.py)
+    echo ""
+    echo "Removing loadtest Docker volumes..."
+    docker volume ls -q 2>/dev/null | grep -i 'load-test' | xargs -r docker volume rm 2>/dev/null || true
+
+    echo ""
+    echo "Cleanup complete. Database container (db-container) was preserved."
+}
+
+cleanup_full_and_remove() {
+    echo "=========================================="
+    echo " Full LoadTest Framework Removal"
+    echo "=========================================="
+    echo ""
+
+    # Remove ALL loadtest Docker resources including db-container
+    echo "[1/6] Removing loadtest services..."
+    docker service ls --format '{{.Name}}' 2>/dev/null | grep '^loadtest-' | xargs -r docker service rm 2>/dev/null || true
+
+    echo "[2/6] Removing ALL loadtest containers (including db-container)..."
+    docker ps -a --format '{{.Names}}' 2>/dev/null | grep -i 'loadtest' | xargs -r docker stop 2>/dev/null || true
+    docker ps -a --format '{{.Names}}' 2>/dev/null | grep -i 'loadtest' | xargs -r docker rm 2>/dev/null || true
+    docker stop db-container 2>/dev/null || true
+    docker rm db-container 2>/dev/null || true
+
+    echo "[3/6] Removing loadtest networks..."
+    docker network ls --format '{{.Name}}' 2>/dev/null | grep -i 'loadtest' | xargs -r docker network rm 2>/dev/null || true
+
+    echo "[4/6] Removing loadtest Docker images..."
+    docker images --format '{{.Repository}}:{{.Tag}}' 2>/dev/null | grep '^loadtest' | xargs -r docker rmi -f 2>/dev/null || true
+
+    echo "[5/6] Removing Docker volumes..."
+    docker volume ls -q 2>/dev/null | grep -i 'load-test' | xargs -r docker volume rm 2>/dev/null || true
+
+    echo "[6/6] Leaving Docker Swarm..."
+    docker swarm leave --force 2>/dev/null || true
+
+    # Prune
+    docker container prune -f 2>/dev/null || true
+    docker network prune -f 2>/dev/null || true
+
+    echo ""
+    echo "Docker resources cleaned. Uninstalling package..."
+    echo ""
+
+    # Uninstall the package itself
+    sudo apt remove -y loadtestframework
+
+    echo ""
+    echo "=========================================="
+    echo " LoadTest Framework fully removed."
+    echo "=========================================="
+    echo "Run 'sudo apt autoremove' to remove unused dependencies."
+}
+
+case "${1:-}" in
+    --help|-h)
+        show_help
+        ;;
+    --remove)
+        cleanup_full_and_remove
+        ;;
+    "")
+        cleanup_standard
+        ;;
+    *)
+        echo "Unknown option: $1"
+        echo ""
+        show_help
+        exit 1
+        ;;
+esac

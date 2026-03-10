@@ -1,0 +1,82 @@
+#!/bin/bash
+#
+# loadtest - Load Test Framework entry point
+#
+# Usage:
+#   loadtest              Launch the GUI application
+#   loadtest config.json  Run orchestrator in CLI mode with given config
+#   loadtest --setup      Run first-time setup (requires sudo)
+#   loadtest --help       Show usage information
+#
+
+INSTALL_DIR="/opt/loadtestframework"
+VENV_DIR="$INSTALL_DIR/.venv"
+ACTIVATE="$VENV_DIR/bin/activate"
+SETUP_MARKER="$INSTALL_DIR/.setup_complete"
+SETUP_SCRIPT="$INSTALL_DIR/setup.sh"
+
+# Handle --setup before anything else
+if [ "${1:-}" = "--setup" ]; then
+    exec "$SETUP_SCRIPT"
+fi
+
+# Check if first-time setup has been run
+if [ ! -f "$SETUP_MARKER" ]; then
+    echo "=========================================="
+    echo " First-time setup required!"
+    echo "=========================================="
+    echo ""
+    echo " Run:  sudo loadtest --setup"
+    echo ""
+    echo " This will install Docker, Python deps,"
+    echo " SIPp, and build the Docker image."
+    exit 1
+fi
+
+if [ ! -f "$ACTIVATE" ]; then
+    echo "Error: Virtual environment not found at $VENV_DIR"
+    echo "Please run: sudo loadtest --setup"
+    exit 1
+fi
+
+# shellcheck disable=SC1090
+source "$ACTIVATE"
+
+export PYTHONPATH="$INSTALL_DIR:$PYTHONPATH"
+
+case "${1:-}" in
+    --help|-h)
+        echo "LoadTest Framework"
+        echo ""
+        echo "Usage:"
+        echo "  loadtest                Launch the GUI application"
+        echo "  loadtest <config.json>  Run load test in CLI mode with given config"
+        echo "  loadtest --setup        Run first-time setup (requires sudo)"
+        echo "  loadtest --help         Show this help message"
+        echo ""
+        echo "Examples:"
+        echo "  sudo loadtest --setup"
+        echo "  loadtest"
+        echo "  loadtest /path/to/my_config.json"
+        ;;
+    "")
+        # No arguments — launch GUI
+        exec python3 "$INSTALL_DIR/gui.py"
+        ;;
+    *)
+        # Argument provided — treat as config file path, run orchestrator
+        CONFIG_PATH="$1"
+
+        # If a relative path is given, resolve it relative to CWD
+        if [[ "$CONFIG_PATH" != /* ]]; then
+            CONFIG_PATH="$(pwd)/$CONFIG_PATH"
+        fi
+
+        if [ ! -f "$CONFIG_PATH" ]; then
+            echo "Error: Config file not found: $CONFIG_PATH"
+            exit 1
+        fi
+
+        exec python3 "$INSTALL_DIR/orchestrate.py" "$CONFIG_PATH"
+        ;;
+esac

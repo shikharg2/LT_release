@@ -1,0 +1,48 @@
+#!/bin/bash
+set -e
+
+INSTALL_DIR="/opt/loadtestframework"
+VENV_DIR="$INSTALL_DIR/.venv"
+
+echo "=========================================="
+echo " LoadTest Framework - Pre-Removal Cleanup"
+echo "=========================================="
+
+# Stop and remove all loadtest Docker services
+echo "Stopping loadtest Docker services..."
+docker service ls --format '{{.Name}}' 2>/dev/null | grep '^loadtest-' | xargs -r docker service rm 2>/dev/null || true
+
+# Stop and remove loadtest containers (preserve db-container)
+echo "Stopping loadtest containers..."
+docker ps -a --format '{{.Names}}' 2>/dev/null | grep -i 'loadtest' | grep -v 'db-container' | xargs -r docker stop 2>/dev/null || true
+docker ps -a --format '{{.Names}}' 2>/dev/null | grep -i 'loadtest' | grep -v 'db-container' | xargs -r docker rm 2>/dev/null || true
+
+# Stop and remove db-container
+echo "Stopping database container..."
+docker stop db-container 2>/dev/null || true
+docker rm db-container 2>/dev/null || true
+
+# Remove loadtest networks
+echo "Removing loadtest networks..."
+docker network ls --format '{{.Name}}' 2>/dev/null | grep -i 'loadtest' | xargs -r docker network rm 2>/dev/null || true
+
+# Remove loadtest Docker images
+echo "Removing loadtest Docker images..."
+docker images --format '{{.Repository}}:{{.Tag}}' 2>/dev/null | grep '^loadtest' | xargs -r docker rmi -f 2>/dev/null || true
+
+# Remove Docker volumes
+echo "Removing loadtest Docker volumes..."
+docker volume ls -q 2>/dev/null | grep -i 'load-test' | xargs -r docker volume rm 2>/dev/null || true
+
+# Prune unused resources
+echo "Pruning unused Docker resources..."
+docker container prune -f 2>/dev/null || true
+docker network prune -f 2>/dev/null || true
+
+# Leave Docker Swarm if we initiated it
+echo "Leaving Docker Swarm (if active)..."
+docker swarm leave --force 2>/dev/null || true
+
+echo "Pre-removal cleanup complete."
+
+exit 0

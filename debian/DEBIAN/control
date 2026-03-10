@@ -1,0 +1,11 @@
+Package: loadtestframework
+Version: 1.0.0
+Section: testing
+Priority: optional
+Architecture: amd64
+Depends: python3 (>= 3.8), python3-venv, python3-pip, ca-certificates, curl, build-essential, cmake, git, libncurses5-dev, libssl-dev, libpcap-dev, libnet1-dev, libsctp-dev, lksctp-tools, libgsl-dev, pkg-config, libpq-dev, python3-pyqt5
+Maintainer: Shikhar <shikhar.gangwar@honeywell.com>
+Description: Load Test Framework
+ A comprehensive load testing framework supporting speed tests,
+ web browsing, video streaming, and VoIP (SIPp) protocols.
+ Includes a PyQt5 GUI and CLI mode with Docker-based test orchestration.
